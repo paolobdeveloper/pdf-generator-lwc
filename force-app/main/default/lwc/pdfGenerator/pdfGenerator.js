@@ -4,6 +4,7 @@ import {ShowToastEvent} from 'lightning/platformShowToastEvent';
 import JS_PDF from '@salesforce/resourceUrl/jsPDFLibrary';
 import JSPDF_AUTO_TABLE from '@salesforce/resourceUrl/jspdfAutotableLibraryPlugin';
 import getAccount from '@salesforce/apex/PDFGeneratorControllerLWC.getAccount';
+//import saveFileInAttachment from '@salesforce/apex/PDFGeneratorControllerLWC.saveFileInAttachment';
 
 export default class PdfGenerator extends LightningElement {
 
@@ -44,7 +45,7 @@ export default class PdfGenerator extends LightningElement {
         }
       }
 
-      //per dare riscontro dell'operazione di salvataggio pdf
+      //per dare riscontro dell'operazione di salvataggio pdf in caso di salvataggio su sezione "Attachments"
       refreshComp(){
         this.dispatchEvent(
           new ShowToastEvent({
@@ -61,7 +62,6 @@ export default class PdfGenerator extends LightningElement {
       // il cuore...
       handleGeneratePDF() {
         console.log("id:" + this.recordId);
-        //console.log('actvitiy:'+JSON.stringify(this.activity));
         if (this.jsPDFInitialized) {
           getAccount({ recordId: this.recordId })
             .then((result) => {
@@ -76,10 +76,9 @@ export default class PdfGenerator extends LightningElement {
                   const doc = new window.jspdf.jsPDF();  
                 // create Template
                 this.createTemplatePDF(doc);
-                doc.save("test.pdf"); //non funziona su mobile, da commentare quando inviamo email
-                // questo e' il codice che deve girare
-                  /*
-                saveFileInAttachment({ids: this.recordId, name: this.account.Name, pdfBody: btoa(doc.output())})
+                doc.save("test.pdf"); //non funziona su mobile, eventualmente commentare questa riga ed usare il pezzo di codice sotto
+                /*
+                saveFileInAttachment({ids: this.recordId, name: this.account.name, pdfBody: btoa(doc.output())})
                 .then(result => {
                     console.log('saveFileInAttachment ok');  
                     this.refreshComp();
@@ -87,14 +86,11 @@ export default class PdfGenerator extends LightningElement {
                 .catch(error => {
                     console.log(error);
                 });
-              */                  
+                */       
                 }catch({ name, message }){
                   console.log(name); // "TypeError"
                   console.log(message); // "oops"
                 }
-                
-  
-
               }
             })
             .catch((error) => {
@@ -106,9 +102,7 @@ export default class PdfGenerator extends LightningElement {
 
       createTemplatePDF(doc) {
         try{
-          console.log(1);
           doc.addImage(this.imgLogo, "PNG", this.LEFT_SPACE, this.POS_LOGO - 20, 50, 50);
-          console.log(2);
           let posText1 = this.POS_LOGO + 10;
           let entityPosLeft = posText1 + (this.INC_LINE * 2);
           let entityPosRight = posText1 + (this.INC_LINE * 2);    
@@ -117,91 +111,128 @@ export default class PdfGenerator extends LightningElement {
           doc.text(this.account.type, this.MAX_LINE_WIDTH, entityPosRight, null, null, "right");
           entityPosRight = entityPosRight + this.INC_LINE;
           entityPosLeft = entityPosLeft + this.INC_LINE;
-          console.log(3);
 
           doc.text(this.account.name, this.MAX_LINE_WIDTH, entityPosRight, null, null, "right");
           entityPosRight = entityPosRight + this.INC_LINE;
           entityPosLeft = entityPosLeft + this.INC_LINE;
-          console.log(4);
 
-    //PARTE CENTRALE TRA BARRE GRIGIE
-    doc.setFontSize(9);
-    doc.setLineWidth(1);
-    doc.setDrawColor(211,211,211);
-    doc.line(this.LEFT_SPACE, entityPosLeft, this.MAX_LINE_WIDTH, entityPosLeft); // horizontal line
-    console.log(5);
-    entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
-    doc.text("Owner:", this.LEFT_SPACE, entityPosLeft, null, null, "left");
-    doc.setFont(this.FONT, "normal");
-    doc.text(' '+this.account.owner, 60, entityPosLeft, null, null, "left");
-    doc.setFont(this.FONT, "bold");
+          //PARTE CENTRALE TRA BARRE GRIGIE
+          doc.setFontSize(9);
+          doc.setLineWidth(1);
+          doc.setDrawColor(211,211,211);
+          doc.line(this.LEFT_SPACE, entityPosLeft, this.MAX_LINE_WIDTH, entityPosLeft); // horizontal line
+          entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
+          doc.text("Owner:", this.LEFT_SPACE, entityPosLeft, null, null, "left");
+          doc.setFont(this.FONT, "normal");
+          doc.text(' '+this.account.owner, 60, entityPosLeft, null, null, "left");
+          doc.setFont(this.FONT, "bold");
 
-    entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
-    doc.text(
-      "Industry:",
-      this.LEFT_SPACE, entityPosLeft, null, null, "left");
-    doc.setFont(this.FONT, "normal");
-    doc.text(' '+this.account.industry,60, entityPosLeft, null, null, "left");
-    doc.setFont(this.FONT, "bold");
-    console.log(6);
-    entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
-    doc.line(this.LEFT_SPACE, entityPosLeft, this.MAX_LINE_WIDTH, entityPosLeft); // horizontal line close       
+          entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
+          doc.text(
+            "Industry:",
+            this.LEFT_SPACE, entityPosLeft, null, null, "left");
+          doc.setFont(this.FONT, "normal");
+          doc.text(' '+this.account.industry,60, entityPosLeft, null, null, "left");
+          doc.setFont(this.FONT, "bold");
+          entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
+          doc.line(this.LEFT_SPACE, entityPosLeft, this.MAX_LINE_WIDTH, entityPosLeft); // horizontal line close       
     
     
-    //OPPORTUNITIES TABLE
-    if(this.opportunities !== undefined && this.opportunities.length != 0){
-      doc.autoTable({
-        styles: { fontSize: 8 },
-        //columnStyles: { 0: { halign: 'center', fillColor: [0, 255, 0] } }, // Cells in first column centered and green
-        margin: { left: this.LEFT_SPACE },
-        head: [
-          [
-          {
-            content: "Opportunities",
-            colSpan: 4, //num colonne tabella per oppo
-            styles: { halign: "center", fillColor: [22, 160, 133] },
-          },
-          ],
-          [
-          "Name",
-          "Stage",
-          "Amount",
-          "Close Date",
-          ],
-        ],
-        body: this.bodyRowsOppos(),
-        theme: "grid",
-        });
-    }    
-    
-
-
-
+          //OPPORTUNITIES TABLE
+          if(this.opportunities !== undefined && this.opportunities.length != 0){
+            doc.autoTable({
+              styles: { fontSize: 8 },
+              margin: { left: this.LEFT_SPACE },
+              head: [
+                [
+                {
+                  content: "Opportunities",
+                  colSpan: 4, //num colonne tabella per oppo
+                  styles: { halign: "center", fillColor: [22, 160, 133] },
+                },
+                ],
+                [
+                "Name",
+                "Stage",
+                "Amount",
+                "Close Date",
+                ],
+              ],
+              body: this.bodyRowsOppos(),
+              startY: entityPosLeft + 5,
+              theme: "grid",
+              });
+          }    
+      
+          //CONTACTS TABLE
+          let finalY = doc.previousAutoTable.finalY;
+          entityPosLeft = finalY + this.INC_LINE ;
+          if(this.contacts !== undefined && this.contacts.length != 0){
+            doc.autoTable({
+              styles: { fontSize: 8 },
+              columnStyles: { 0: { halign: 'center', fillColor: [0, 255, 0] } }, // Cells in first column centered and green
+              margin: { left: this.LEFT_SPACE },
+              head: [
+                [
+                {
+                  content: "Contacts",
+                  colSpan: 4, //num colonne tabella 
+                  styles: { halign: "center", fillColor: [0, 102, 204] },
+                },
+                ],
+                [
+                "Name",
+                "Title",
+                "Email",
+                "Phone",
+                ],
+              ],
+              body: this.bodyRowsCts(),
+              startY: entityPosLeft + 5,
+              theme: "grid",
+              });
+          }    
           const pageCount = doc.internal.getNumberOfPages();
       
           for(let i = 1; i <= pageCount; i++) {
               doc.setPage(i);
               doc.text('Page ' + String(i) + ' of ' + String(pageCount), 210-10,297-10, null, null, "right");
           }
-          console.log(10);
           return doc;    
         }catch({ name, message }){
-             console.log(name); // "TypeError"
+            console.log(name); // "TypeError"
             console.log(message); // "oops"
         }    
       }
 
 
       bodyRowsOppos() {
+        let euro = Intl.NumberFormat('it-IT', {
+            style: 'currency',
+            currency: 'EUR',
+        });        
         let body = new Array(this.opportunities.length);
           for (let j = 0; j < this.opportunities.length; j++) {
           body[j] = new Array(3); //numColonne
           body[j][0] = this.opportunities[j].name;
           body[j][1] = this.opportunities[j].stage;
-          body[j][2] = this.opportunities[j].amount;
+          body[j][2] = euro.format(this.opportunities[j].amount);
           body[j][3] = this.opportunities[j].closeDate;
           }
           return body;
-        }      
+        }  
+        
+        bodyRowsCts() {
+     
+          let body = new Array(this.contacts.length);
+            for (let j = 0; j < this.contacts.length; j++) {
+            body[j] = new Array(3); //numColonne
+            body[j][0] = this.contacts[j].name;
+            body[j][1] = this.contacts[j].title;
+            body[j][2] = this.contacts[j].email;
+            body[j][3] = this.contacts[j].phone;
+            }
+            return body;
+          }           
 
 }

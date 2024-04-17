@@ -3,8 +3,8 @@ public without sharing class PDFGeneratorControllerLWC {
     @AuraEnabled(cacheable=false)
     public static AccountPDF getAccount(Id recordId){
         Account acc = [SELECT Id, Name, Type, Phone, Owner.Name, Industry, 
-                            (SELECT Id, Name, StageName, Amount, CloseDate FROM Opportunities),
-                            (SELECT Id, Name, Title, Email, Phone FROM Contacts)
+                            (SELECT Id, Name, StageName, Amount, CloseDate FROM Opportunities ORDER BY CreatedDate DESC),
+                            (SELECT Id, Name, Title, Email, Phone FROM Contacts ORDER BY CreatedDate DESC)
                             FROM Account WHERE Id = :recordId];
         
         AccountPDF apdf = new AccountPDF();
