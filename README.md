@@ -1,10 +1,11 @@
-# Salesforce DX Project: Next Steps
+# PDFGenerator LWC
 
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
+Componente LWC che utilizza le librerie javascript [jspdf](https://www.npmjs.com/package/jspdf) e [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) per la realizzazione di un PDF a partire da un oggetto Account su Salesforce
 
-## How Do You Plan to Deploy Your Changes?
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+## I dettagli dell'implementazione
+
+Ho pubblicato un [articolo](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models) su LinkedIn .
 
 ## Configure Your Salesforce DX Project
 
