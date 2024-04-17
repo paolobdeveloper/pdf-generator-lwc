@@ -68,20 +68,14 @@ export default class PdfGenerator extends LightningElement {
               console.log('Data from Apex:'+ JSON.stringify(result));
               if (result) {
                 this.account = result.account;
-                console.log(-1);
                 this.opportunities = result.opps;
-                console.log(0);
-                //this.contacts = result.contacts;
+                this.contacts = result.contacts;
                 this.error = undefined; 
-                // Make sure to correctly reference the loaded jsPDF library.
-                console.log(0.1);
+
                 try{
                   const doc = new window.jspdf.jsPDF();  
-                  console.log(0.2);
                 // create Template
-                console.log(0.5);
                 this.createTemplatePDF(doc);
-                console.log(0.8);
                 doc.save("test.pdf"); //non funziona su mobile, da commentare quando inviamo email
                 // questo e' il codice che deve girare
                   /*
@@ -113,17 +107,75 @@ export default class PdfGenerator extends LightningElement {
       createTemplatePDF(doc) {
         try{
           console.log(1);
-          doc.addImage(this.imgLogo, "PNG", this.LEFT_SPACE, this.POS_LOGO, 50, 50);
+          doc.addImage(this.imgLogo, "PNG", this.LEFT_SPACE, this.POS_LOGO - 20, 50, 50);
           console.log(2);
-          let posText1 = this.POS_LOGO + 20;
-          let entityPosLeft = posText1 + this.DELTA;
-          let entityPosRight = posText1 + this.DELTA;    
+          let posText1 = this.POS_LOGO + 10;
+          let entityPosLeft = posText1 + (this.INC_LINE * 2);
+          let entityPosRight = posText1 + (this.INC_LINE * 2);    
           doc.setFont(this.FONT, "bold");
+          
+          doc.text(this.account.type, this.MAX_LINE_WIDTH, entityPosRight, null, null, "right");
+          entityPosRight = entityPosRight + this.INC_LINE;
+          entityPosLeft = entityPosLeft + this.INC_LINE;
           console.log(3);
-          doc.text(this.account.Name, this.MAX_LINE_WIDTH, entityPosRight, null, null, "right");
+
+          doc.text(this.account.name, this.MAX_LINE_WIDTH, entityPosRight, null, null, "right");
           entityPosRight = entityPosRight + this.INC_LINE;
           entityPosLeft = entityPosLeft + this.INC_LINE;
           console.log(4);
+
+    //PARTE CENTRALE TRA BARRE GRIGIE
+    doc.setFontSize(9);
+    doc.setLineWidth(1);
+    doc.setDrawColor(211,211,211);
+    doc.line(this.LEFT_SPACE, entityPosLeft, this.MAX_LINE_WIDTH, entityPosLeft); // horizontal line
+    console.log(5);
+    entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
+    doc.text("Owner:", this.LEFT_SPACE, entityPosLeft, null, null, "left");
+    doc.setFont(this.FONT, "normal");
+    doc.text(' '+this.account.owner, 60, entityPosLeft, null, null, "left");
+    doc.setFont(this.FONT, "bold");
+
+    entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
+    doc.text(
+      "Industry:",
+      this.LEFT_SPACE, entityPosLeft, null, null, "left");
+    doc.setFont(this.FONT, "normal");
+    doc.text(' '+this.account.industry,60, entityPosLeft, null, null, "left");
+    doc.setFont(this.FONT, "bold");
+    console.log(6);
+    entityPosLeft = entityPosLeft + this.INC_LINE -2 ;
+    doc.line(this.LEFT_SPACE, entityPosLeft, this.MAX_LINE_WIDTH, entityPosLeft); // horizontal line close       
+    
+    
+    //OPPORTUNITIES TABLE
+    if(this.opportunities !== undefined && this.opportunities.length != 0){
+      doc.autoTable({
+        styles: { fontSize: 8 },
+        //columnStyles: { 0: { halign: 'center', fillColor: [0, 255, 0] } }, // Cells in first column centered and green
+        margin: { left: this.LEFT_SPACE },
+        head: [
+          [
+          {
+            content: "Opportunities",
+            colSpan: 4, //num colonne tabella per oppo
+            styles: { halign: "center", fillColor: [22, 160, 133] },
+          },
+          ],
+          [
+          "Name",
+          "Stage",
+          "Amount",
+          "Close Date",
+          ],
+        ],
+        body: this.bodyRowsOppos(),
+        theme: "grid",
+        });
+    }    
+    
+
+
 
           const pageCount = doc.internal.getNumberOfPages();
       
@@ -131,12 +183,25 @@ export default class PdfGenerator extends LightningElement {
               doc.setPage(i);
               doc.text('Page ' + String(i) + ' of ' + String(pageCount), 210-10,297-10, null, null, "right");
           }
-          console.log(5);
+          console.log(10);
           return doc;    
         }catch({ name, message }){
              console.log(name); // "TypeError"
             console.log(message); // "oops"
         }    
       }
+
+
+      bodyRowsOppos() {
+        let body = new Array(this.opportunities.length);
+          for (let j = 0; j < this.opportunities.length; j++) {
+          body[j] = new Array(3); //numColonne
+          body[j][0] = this.opportunities[j].name;
+          body[j][1] = this.opportunities[j].stage;
+          body[j][2] = this.opportunities[j].amount;
+          body[j][3] = this.opportunities[j].closeDate;
+          }
+          return body;
+        }      
 
 }

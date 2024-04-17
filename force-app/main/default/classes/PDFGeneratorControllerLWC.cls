@@ -2,23 +2,43 @@ public without sharing class PDFGeneratorControllerLWC {
 
     @AuraEnabled(cacheable=false)
     public static AccountPDF getAccount(Id recordId){
-        Account acc = [SELECT Id, Name, (SELECT Id, Name FROM Opportunities),(SELECT Id, Name FROM Contacts)
+        Account acc = [SELECT Id, Name, Type, Phone, Owner.Name, Industry, 
+                            (SELECT Id, Name, StageName, Amount, CloseDate FROM Opportunities),
+                            (SELECT Id, Name, Title, Email, Phone FROM Contacts)
                             FROM Account WHERE Id = :recordId];
         
         AccountPDF apdf = new AccountPDF();
         AccountDTO accDTO = new AccountDTO();
         accDTO.id = acc.Id;
-        accDTO.Name = acc.Name;
+        accDTO.name = acc.Name;
+        accDTO.type = acc.Type;
+        accDTO.industry = acc.Industry;
+        accDTO.owner = acc.Owner.Name;
         apdf.account = accDTO;
 
         List<OppoDTO> opps = new List<OppoDTO>();
         for(Opportunity o : acc.Opportunities){
             OppoDTO oDTO = new OppoDTO();
             oDTO.Id = o.Id;
-            oDTO.Name = o.Name;
+            oDTO.name = o.Name;
+            oDTO.stage = o.StageName;
+            oDTO.amount = o.Amount;
+            oDTO.closeDate = o.CloseDate;
             opps.add(oDTO);
         }
         apdf.opps = opps;
+
+        List<ContactDTO> cts = new List<ContactDTO>();
+        for(Contact c : acc.Contacts){
+            ContactDTO cDTO = new ContactDTO();
+            cDTO.Id = c.Id;
+            cDTO.name = c.Name;
+            cDTO.title = c.Title;
+            cDTO.email = c.Email;
+            cDTO.phone = c.Phone;
+            cts.add(cDTO);
+        }
+        apdf.contacts = cts;
         
 
         return apdf;
@@ -74,19 +94,26 @@ public without sharing class PDFGeneratorControllerLWC {
         public Id id {get; set;}
 
         @AuraEnabled
-        public String Name {get; set;}
+        public String name {get; set;}
     }
 
     public class AccountDTO extends BaseObject{
-
+        @AuraEnabled public String phone;
+        @AuraEnabled public String owner;
+        @AuraEnabled public String industry;
+        @AuraEnabled public String type;
     }
 
     public class OppoDTO extends BaseObject{
-        
+        @AuraEnabled public String stage;
+        @AuraEnabled public Decimal amount;
+        @AuraEnabled public Date closeDate;        
     }
 
     public class ContactDTO extends BaseObject{
-        
+        @AuraEnabled public String phone;
+        @AuraEnabled public String title;
+        @AuraEnabled public String email;        
     }
 
 
